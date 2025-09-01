@@ -83,15 +83,27 @@ public class CustomModelBakery {
         if (defaultModel instanceof MultiPart) {
             states.forEach(blockState -> {
                 ResourceLocation stateID = BlockModelShaper.stateToModelLocation(blockID, blockState);
-                models.put(stateID, defaultModel);
+                
+                // ADDED CHECK: Ensure both the key and value are not null
+                if (stateID != null && defaultModel != null) {
+                    models.put(stateID, defaultModel);
+                }
             });
         } else {
             states.forEach(blockState -> {
                 ResourceLocation stateID = BlockModelShaper.stateToModelLocation(blockID, blockState);
-                UnbakedModel model = stateID.equals(defaultStateID)
-                        ? defaultModel
-                        : provider.getModelVariant(stateID, blockState, models);
-                models.put(stateID, model);
+
+                // ADDED CHECK: Ensure the key is not null before proceeding
+                if (stateID != null) {
+                    UnbakedModel model = stateID.equals(defaultStateID)
+                            ? defaultModel
+                            : provider.getModelVariant(stateID, blockState, models);
+                    
+                    // ADDED CHECK: Ensure the model value is not null before putting it in the map
+                    if (model != null) {
+                        models.put(stateID, model);
+                    }
+                }
             });
         }
     }
