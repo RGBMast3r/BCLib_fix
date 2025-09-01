@@ -97,15 +97,20 @@ public class CustomModelBakery {
     }
 
     private void addItemModel(ResourceLocation itemID, ItemModelProvider provider) {
-        ModelResourceLocation modelLocation = new ModelResourceLocation(
-                itemID.getNamespace(),
-                itemID.getPath(),
-                "inventory"
-        );
-        if (models.containsKey(modelLocation)) {
-            return;
+        ModelResourceLocation modelLocation = new ModelResourceLocation(itemID, "inventory");
+    
+        if (!models.containsKey(modelLocation)) {
+            ResourceLocation itemModelLocation = itemID.withPrefix("item/");
+    
+            // Get the model
+            BlockModel model = provider.getItemModel(itemID);
+            
+            if (model != null) {
+                models.put(modelLocation, model);        // use consistent keys
+                models.put(itemModelLocation, model);    // optional additional mapping
+            } else {
+                System.err.println("Warning: model for " + itemID + " is null, skipping");
+            }
         }
-        BlockModel model = provider.getItemModel(modelLocation);
-        models.put(modelLocation, model);
     }
 }
