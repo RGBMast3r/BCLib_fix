@@ -80,29 +80,31 @@ public class CustomModelBakery {
         ResourceLocation defaultStateID = BlockModelShaper.stateToModelLocation(blockID, defaultState);
         UnbakedModel defaultModel = provider.getModelVariant(defaultStateID, defaultState, models);
 
+        if (defaultModel == null) {
+            System.err.println("Warning: default model for " + blockID + " is null, using fallback");
+            defaultModel = getFallbackBlockModel();
+        }
+
         if (defaultModel instanceof MultiPart) {
             states.forEach(blockState -> {
                 ResourceLocation stateID = BlockModelShaper.stateToModelLocation(blockID, blockState);
-                
-                // ADDED CHECK: Ensure both the key and value are not null
-                if (stateID != null && defaultModel != null) {
+                if (stateID != null) {
                     models.put(stateID, defaultModel);
                 }
             });
         } else {
             states.forEach(blockState -> {
                 ResourceLocation stateID = BlockModelShaper.stateToModelLocation(blockID, blockState);
-
-                // ADDED CHECK: Ensure the key is not null before proceeding
                 if (stateID != null) {
                     UnbakedModel model = stateID.equals(defaultStateID)
                             ? defaultModel
                             : provider.getModelVariant(stateID, blockState, models);
-                    
-                    // ADDED CHECK: Ensure the model value is not null before putting it in the map
-                    if (model != null) {
-                        models.put(stateID, model);
+
+                    if (model == null) {
+                        System.err.println("Warning: null model for state " + stateID + ", using fallback");
+                        model = getFallbackBlockModel();
                     }
+                    models.put(stateID, model);
                 }
             });
         }
@@ -110,19 +112,26 @@ public class CustomModelBakery {
 
     private void addItemModel(ResourceLocation itemID, ItemModelProvider provider) {
         ModelResourceLocation modelLocation = new ModelResourceLocation(itemID, "inventory");
-    
+
         if (!models.containsKey(modelLocation)) {
             ResourceLocation itemModelLocation = itemID.withPrefix("item/");
-    
-            // Get the model
+
             BlockModel model = provider.getItemModel(itemID);
-            
-            if (model != null) {
-                models.put(modelLocation, model);        // use consistent keys
-                models.put(itemModelLocation, model);    // optional additional mapping
-            } else {
-                System.err.println("Warning: model for " + itemID + " is null, skipping");
+            if (model == null) {
+                System.err.println("Warning: model for item " + itemID + " is null, using fallback");
+                model = getFallbackBlockModel();
             }
+
+            models.put(modelLocation, model);
+            models.put(itemModelLocation, model);
         }
     }
+
+    /**
+     * Returns a simple fallback cube model to prevent nulls.
+     */
+    private UnbakedModel getFallbackBlockModel() {
+        return models.get(new ResourceLocation("minecraft", "block/stone"));
+    }
+
 }
